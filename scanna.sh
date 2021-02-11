@@ -1,11 +1,32 @@
 #!/bin/bash
 
 file_hash=$1            # file containing the hashes to check
-file_md5=$s             # file containing the filenames
+file_md5=$2             # file containing the filenames
 file_json='curl.out'    # curl output
 file_200='hash.200'     # list of hashes on VT
 
+# Insert here your Virus Total API key
+apikey=''
+
 # @todo: check input files
+if [ $# -ne 2 ]; then
+    echo
+    echo "Usage: scanna.sh <hash file> <filename/md5 file>"
+    echo 
+    exit -1
+elif [ ! -f "$1" ] 
+then
+    echo
+    echo "The file $1 does not exists"
+    echo 
+    exit -2
+elif [ ! -f "$2" ] 
+then
+    echo
+    echo "The file $2 does not exists"
+    echo 
+    exit -3
+fi
 
 while read hash; do
 
@@ -15,7 +36,7 @@ while read hash; do
          --output ${file_json} \
          --write-out '%{response_code}' \
          --url https://www.virustotal.com/api/v3/files/${hash} \
-         --header 'x-apikey: 74d6672d4a83cc3fa3877f2f582e0c9508a38e3886529f6bdf6c0264760736cb'`
+         --header 'x-apikey: $apikey'`
 
      # print the hash and the code returned by VT
      echo "$hash = $code"
