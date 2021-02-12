@@ -1,17 +1,18 @@
-# scanna!
+# Scanna!
 
-## Interface to the Virus Total API
+## Purpose
+**Scanna!** is an interface to the Virus Total API.
+Its aim is to check multiple file hashes against the VT database.
+I'm not very familiar with bash scripting; so, suggestion, as well as insults or jokes about my code are welcome. :-)
 
 ## Procedure
-
-Per prima cosa, vanno calcolati gli hash (md5 o sha1) dei file da verificare.  
-Ipotizzando che i file siano contenuti nelle sotto-directory di una stessa cartella (nel nostro caso, la directory `test`), il comando può essere:
+First, you need to calculate the hashes (MD5 or SHA1) of the files with a command like:
 
 ```
 find ./test -type f -exec md5 {} \; | tee hash-doc.md5
 ```
 
-e genererà un output simile a questo:
+On my Mac, it produces the output:
 
 ```
 MD5 (./test/Malware Technical Insight _Turla “Penquin_x64”.pdf) = 9c183abae72a8619e594843872719e95
@@ -24,13 +25,14 @@ MD5 (./test/analyzing-malicious-document-files.pdf) = b87875732c6b642c25ad396f79
 MD5 (./test/La-NIS-in-pillole.pdf) = 2a97865d936d27302c1adfa185000b7d
 ```
 
-Dato che il formato potrebbe variare, ho preferito creare un file di input contenente solo gli hash, che può essere facilmente generato con comandi come:
+On other systems the output may vary, so I decided to use as input a file containing only hashes.
+I extract the hashes with the command:
 
 ```
 cat hash-doc.md5 | cut -d "=" -f 2 > hash-list.txt
 ```
 
-generando un file simile a:
+generating a file like:
 
 ```
 9c183abae72a8619e594843872719e95
@@ -43,13 +45,13 @@ b87875732c6b642c25ad396f79b77427
 2a97865d936d27302c1adfa185000b7d
 ```
 
-I due file, poi, devono essere passati come parametri allo script:
+Both files must be passed as parameters to the script:
 
 ```
 sh scanna.sh hash-list.txt hash-doc.md5
 ```
 
-che produrrà il seguente output:
+The output of the elaboration will be:
 
 ```
 9c183abae72a8619e594843872719e95 = 404
@@ -74,11 +76,20 @@ b87875732c6b642c25ad396f79b77427 = 200
 	suspicious:	0
 ```
 
-Se VirustTotal non riconosce il file, torna un codice 404.
-Se al contrario lo riconosce, torna un array di dati in formato json, in cui sono contenute tutte le informazioni disponibili su di esso (v. file `curl.out`).
-In questo caso, il programma stampa il nome del file a cui si riferisce l'hash e legge l'esito dell'analisi dall'output json della chiamata `curl`.
-Il campo `filename` è il nome del file che è stato analizzato da VirusTotal.
-L'hash e i dati relativi ai file identificati da VirusTotal sono riportati nel file `hash-find.txt`: 
+If VirustTotal does not recognize the file, it returns a 404 code.  
+If VirusTotal recognizes the file, it returns an array of data in json format, containing all the information available on it (see file `curl.out`).
+In this case, the program prints out the name of the file the hash refers to and the result of the analysis.
+
+```
+    MD5 (./test/La-NIS-in-pillole.pdf) = 2a97865d936d27302c1adfa185000b7d
+    filename:  	La-NIS-in-pillole.pdf
+    malicious: 	0
+    suspicious:	0
+```
+
+The `filename` field is the name of the file returned by VirusTotal.  
+
+The hash and data related to files identified by VirusTotal are reported in the `hash-find.txt` file:
 
 ```
 cd6b9ffc4ceb908c61c10710c023a8a8	0	16	condizion_7785474.doc
