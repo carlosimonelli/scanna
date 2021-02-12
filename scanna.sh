@@ -1,12 +1,10 @@
 #!/bin/bash
 
-file_hash=$1            # file containing the hashes to check
-file_md5=$2             # file containing the filenames
-file_json='curl.out'    # curl output
-file_200='hash.200'     # list of hashes on VT
-
-# Insert here your Virus Total API key
-apikey=''
+file_hash=$1             # file containing the hashes to check
+file_md5=$2              # file containing the filenames
+file_json='curl.out'     # curl output
+file_200='hash-find.txt' # list of hashes on VT
+apikey=`cat apikey.vt`   # Reads the VT API kei
 
 # @todo: check input files
 if [ $# -ne 2 ]; then
@@ -30,13 +28,14 @@ fi
 
 while read hash; do
 
-    # calls the API and saves the return code in a variable
+    # calls the API, saves the return code in a variable 
+    # and writes the output in a file
     code=`curl --request GET \
          --silent \
          --output ${file_json} \
          --write-out '%{response_code}' \
          --url https://www.virustotal.com/api/v3/files/${hash} \
-         --header 'x-apikey: $apikey'`
+         --header 'x-apikey: '${apikey}`
 
      # print the hash and the code returned by VT
      echo "$hash = $code"
@@ -45,17 +44,18 @@ while read hash; do
      if [ $code == '200' ]; then
 
          # reads the name associated with the hash
-         cat "$file_md5" | grep "$hash"
+         grep=`cat "$file_md5" | grep "$hash"`
 
-         # reads the filename and the analysis results
+         # reads the filename and the analysis results from the output file
          filename=$(cat "$file_json" | jq -r '.data.attributes.meaningful_name')
          malicious=$(cat "$file_json" | jq -r '.data.attributes.last_analysis_stats.malicious')
          suspicious=$(cat "$file_json" | jq -r '.data.attributes.last_analysis_stats.suspicious')
 
          # print the analysis results
-         echo "filename:\t$filename"
-         echo "malicious:\t$malicious"
-         echo "suspicious:\t$suspicious"
+         echo "\t$grep"
+         echo "\tfilename:  \t$filename"
+         echo "\tmalicious: \t$malicious"
+         echo "\tsuspicious:\t$suspicious"
 
          # writes the hash and the results on the output file
          echo "$hash\t$suspicious\t$malicious\t$filename" >> $file_200
